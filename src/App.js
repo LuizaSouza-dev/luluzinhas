@@ -113,7 +113,17 @@ const STYLE = `
   .progress-bar-wrap { background:#F5EAED; border-radius:50px; height:8px; margin:8px 0; overflow:hidden; }
   .progress-bar-fill { height:100%; border-radius:50px; background:linear-gradient(90deg,var(--rose),var(--coral)); transition:width 0.5s; }
   .loading { text-align:center; padding:40px 20px; color:var(--text-soft); font-size:14px; }
+  .pin-dots { display:flex; gap:12px; justify-content:center; margin:20px 0; }
+  .pin-dot { width:16px; height:16px; border-radius:50%; border:2px solid var(--rose-light); background:transparent; transition:all 0.2s; }
+  .pin-dot.filled { background:var(--rose); border-color:var(--rose); }
+  .pin-shake { animation: shake 0.4s ease; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 40%{transform:translateX(8px)} 60%{transform:translateX(-6px)} 80%{transform:translateX(6px)} }
+  .pin-keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; width:100%; max-width:240px; margin:0 auto; }
+  .pin-key { background:white; border:1.5px solid var(--rose-light); border-radius:16px; padding:16px; font-size:20px; font-weight:800; color:var(--text); cursor:pointer; text-align:center; box-shadow:0 2px 8px rgba(212,69,106,0.08); transition:all 0.15s; font-family:'Nunito',sans-serif; }
+  .pin-key:active { background:var(--rose-pale); transform:scale(0.95); }
+  .pin-key.delete { font-size:16px; color:var(--text-soft); }
 `;
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("home");
@@ -147,15 +157,14 @@ export default function App() {
       supabase.from("desejos").select("*"),
     ]);
     setAmigas(am || []);
-    
     setPagamentos(pag || []);
     setDesejos(des || []);
     const mesAtual = new Date().getMonth() + 1;
-const evFiltrados = (ev || []).filter(e => {
-  const mes = parseInt(e.data_aniversario.split("/")[1]);
-  return mes === mesAtual;
-});
-setEventos(evFiltrados);
+    const evFiltrados = (ev || []).filter(e => {
+      const mes = parseInt(e.data_aniversario.split("/")[1]);
+      return mes === mesAtual;
+    });
+    setEventos(evFiltrados);
     if (evFiltrados.length > 0) setEventoAtivo(evFiltrados[0].id);
     setLoading(false);
   }
@@ -217,7 +226,7 @@ setEventos(evFiltrados);
   const valorPorPessoa = evento ? Math.ceil(evento.valor_total / (amigas.length - 1)) : 0;
   const eu = amigas.find(a => a.nome === user);
   const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
-const mesAtual = evento ? (() => { const [d, m] = evento.data_aniversario.split("/"); return `${meses[parseInt(m)-1]} ${new Date().getFullYear()}`; })() : "";
+  const mesAtual = evento ? (() => { const [d, m] = evento.data_aniversario.split("/"); return `${meses[parseInt(m)-1]} ${new Date().getFullYear()}`; })() : "";
 
   return (
     <>
@@ -263,7 +272,13 @@ const mesAtual = evento ? (() => { const [d, m] = evento.data_aniversario.split(
     </>
   );
 }
+
 function WhoSelector({ amigas, loading, onSelect }) {
+  const [selecionada, setSelecionada] = useState(null);
+  const [pin, setPin] = useState("");
+  const [erro, setErro] = useState(false);
+  const [shake, setShake] = useState(false);
+
   if (loading) return (
     <>
       <style>{STYLE}</style>
@@ -274,22 +289,83 @@ function WhoSelector({ amigas, loading, onSelect }) {
       </div>
     </>
   );
+
+  function handleKey(digit) {
+    if (digit === "del") {
+      setPin(p => p.slice(0, -1));
+      return;
+    }
+    if (pin.length >= 4) return;
+    const novoPin = pin + digit;
+    setPin(novoPin);
+    if (novoPin.length === 4) {
+      setTimeout(() => confirmarPin(novoPin), 150);
+    }
+  }
+
+  function confirmarPin(pinAtual) {
+    const pinCorreto = selecionada["PIN"] || selecionada.pin;
+    if (pinAtual === pinCorreto) {
+      onSelect(selecionada.nome);
+    } else {
+      setShake(true);
+      setErro(true);
+      setPin("");
+      setTimeout(() => { setErro(false); setShake(false); }, 1500);
+    }
+  }
+
   return (
     <>
       <style>{STYLE}</style>
       <div className="who-screen">
         <div style={{ fontSize: 52, marginBottom: 12 }}>🎀</div>
         <div className="who-title">Niver das Luluzinhas</div>
-        <div className="who-sub">Quem é você, linda?</div>
-        <div className="who-grid">
-          {amigas.map(a => (
-            <div key={a.id} className="who-item" onClick={() => onSelect(a.nome)}>
-              <div className="avatar avatar-lg">{a.emoji || "🌸"}</div>
-              <span className="who-name">{a.apelido || a.nome}</span>
-              <button className="btn btn-primary btn-sm" style={{ width: "100%", padding: "6px 0", fontSize: 12 }} onClick={() => onSelect(a.nome)}>Entrar</button>
+
+        {!selecionada ? (
+          <>
+            <div className="who-sub">Quem é você, linda?</div>
+            <div className="who-grid">
+              {amigas.map(a => (
+                <div key={a.id} className="who-item" onClick={() => { setSelecionada(a); setPin(""); setErro(false); }}>
+                  <div className="avatar avatar-lg">{a.emoji || "🌸"}</div>
+                  <span className="who-name">{a.apelido || a.nome}</span>
+                  <button className="btn btn-primary btn-sm" style={{ width: "100%", padding: "6px 0", fontSize: 12 }}>Entrar</button>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
+          </>
+        ) : (
+          <div style={{ width: "100%", maxWidth: 280, textAlign: "center" }}>
+            <div className="avatar avatar-lg" style={{ margin: "0 auto 12px" }}>{selecionada.emoji || "🌸"}</div>
+            <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 20, fontWeight: 700, color: "var(--rose)", marginBottom: 4 }}>
+              Olá, {selecionada.apelido || selecionada.nome}!
+            </div>
+            <div style={{ fontSize: 13, color: "var(--text-soft)", marginBottom: 4 }}>Digite seu PIN 🔐</div>
+
+            <div className={`pin-dots${shake ? " pin-shake" : ""}`}>
+              {[0,1,2,3].map(i => (
+                <div key={i} className={`pin-dot${i < pin.length ? " filled" : ""}`} />
+              ))}
+            </div>
+
+            {erro && <div style={{ color: "#D4456A", fontWeight: 700, fontSize: 13, marginBottom: 10 }}>PIN incorreto 🔒 tente novamente</div>}
+
+            <div className="pin-keypad">
+              {["1","2","3","4","5","6","7","8","9","","0","del"].map((k, i) => (
+                k === "" ? <div key={i} /> :
+                <button key={i} className={`pin-key${k === "del" ? " delete" : ""}`} onClick={() => handleKey(k)}>
+                  {k === "del" ? "⌫" : k}
+                </button>
+              ))}
+            </div>
+
+            <button onClick={() => { setSelecionada(null); setPin(""); setErro(false); }}
+              style={{ background: "none", border: "none", color: "var(--text-soft)", fontSize: 13, cursor: "pointer", fontFamily: "'Nunito',sans-serif", marginTop: 16 }}>
+              ← Voltar
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
