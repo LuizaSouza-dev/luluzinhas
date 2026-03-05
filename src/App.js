@@ -142,15 +142,21 @@ export default function App() {
     setLoading(true);
     const [{ data: am }, { data: ev }, { data: pag }, { data: des }] = await Promise.all([
       supabase.from("amigas").select("*").eq("ativa", true).order("nome"),
-      supabase.from("eventos").select("*").eq("status", "aberto").order("criado_em"),
+      supabase.from("eventos").select("*").eq("status", "aberto"),
       supabase.from("pagamentos").select("*"),
       supabase.from("desejos").select("*"),
     ]);
     setAmigas(am || []);
-    setEventos(ev || []);
+    
     setPagamentos(pag || []);
     setDesejos(des || []);
-    if (ev && ev.length > 0) setEventoAtivo(ev[0].id);
+    const mesAtual = new Date().getMonth() + 1;
+const evFiltrados = (ev || []).filter(e => {
+  const mes = parseInt(e.data_aniversario.split("/")[1]);
+  return mes === mesAtual;
+});
+setEventos(evFiltrados);
+    if (evFiltrados.length > 0) setEventoAtivo(evFiltrados[0].id);
     setLoading(false);
   }
 
