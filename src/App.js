@@ -1,4 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  process.env.REACT_APP_SUPABASE_URL,
+  process.env.REACT_APP_SUPABASE_ANON_KEY
+);
 
 const STYLE = `
   @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Nunito:wght@400;600;700;800&display=swap');
@@ -32,7 +38,7 @@ const STYLE = `
   .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:10px 20px; border-radius:50px; font-family:'Nunito',sans-serif; font-weight:800; font-size:13px; cursor:pointer; border:none; transition:all 0.2s; }
   .btn-primary { background:linear-gradient(135deg,var(--rose),#B03060); color:white; box-shadow:0 4px 14px rgba(212,69,106,0.35); }
   .btn-full { width:100%; } .btn-sm { padding:7px 14px; font-size:12px; }
-  .avatar { border-radius:50%; background:var(--rose-light); display:flex; align-items:center; justify-content:center; font-weight:800; color:var(--rose); flex-shrink:0; }
+  .avatar { border-radius:50%; background:var(--rose-light); display:flex; align-items:center; justify-content:center; font-weight:800; color:var(--rose); flex-shrink:0; overflow:hidden; }
   .avatar-lg { width:72px; height:72px; font-size:26px; }
   .avatar-md { width:44px; height:44px; font-size:16px; }
   .avatar-sm { width:34px; height:34px; font-size:12px; }
@@ -106,114 +112,105 @@ const STYLE = `
   .pill-tab:not(.active) { background:var(--rose-pale); color:var(--rose); }
   .progress-bar-wrap { background:#F5EAED; border-radius:50px; height:8px; margin:8px 0; overflow:hidden; }
   .progress-bar-fill { height:100%; border-radius:50px; background:linear-gradient(90deg,var(--rose),var(--coral)); transition:width 0.5s; }
+  .loading { text-align:center; padding:40px 20px; color:var(--text-soft); font-size:14px; }
 `;
-const AMIGAS = [
-  { id: 1, nome: "Luiza", emoji: "🌺", aniversario: "12/08", pix: "luiza@email.com" },
-  { id: 2, nome: "Carol", emoji: "🐚", aniversario: "14/03", pix: "carol@email.com" },
-  { id: 3, nome: "Ana", emoji: "🌊", aniversario: "22/05", pix: "ana@pix.com" },
-  { id: 4, nome: "Bete", emoji: "🐾", aniversario: "03/03", pix: "bete@email.com" },
-  { id: 5, nome: "Dani", emoji: "🦋", aniversario: "17/07", pix: "dani@email.com" },
-  { id: 6, nome: "Fabi", emoji: "🌸", aniversario: "29/09", pix: "fabi@email.com" },
-  { id: 7, nome: "Gi", emoji: "🐠", aniversario: "11/06", pix: "gi@email.com" },
-  { id: 8, nome: "Lena", emoji: "🌻", aniversario: "08/11", pix: "lena@email.com" },
-  { id: 9, nome: "Mara", emoji: "🦜", aniversario: "25/03", pix: "mara@email.com" },
-  { id: 10, nome: "Tati", emoji: "🐬", aniversario: "30/12", pix: "tati@email.com" },
-];
-
-const EVENTOS = [
-  {
-    id: "ev1", aniversariante: "Bete", data: "03/03", mes: "Março 2026",
-    tesoureira: "Carol", valorTotal: 180,
-    desejos: [
-      { texto: "Camiseta de praia tamanho M — qualquer cor clara 🌊", link: "" },
-      { texto: "Livro: A Sutil Arte de Ligar o F*da-se", link: "https://amazon.com.br" },
-    ],
-    locais: [
-      { nome: "Restaurante Coco Bambu", detalhe: "Boa Viagem — tem varanda!", votos: 4 },
-      { nome: "Casa da Luiza", detalhe: "Churrasquinho na piscina 🍖", votos: 5 },
-      { nome: "Quintal da Praia", detalhe: "Piedade, pé na areia", votos: 2 },
-    ],
-    dataSugerida: "Sábado, 08 de março",
-    pagamentos: [
-      { amiga: "Luiza", pago: true }, { amiga: "Carol", pago: true },
-      { amiga: "Ana", pago: true }, { amiga: "Dani", pago: false },
-      { amiga: "Fabi", pago: true }, { amiga: "Gi", pago: false },
-      { amiga: "Lena", pago: true }, { amiga: "Mara", pago: true },
-      { amiga: "Tati", pago: false },
-    ],
-    mensagem: "Vocês são o melhor presente que a vida me deu 🥹",
-  },
-  {
-    id: "ev2", aniversariante: "Mara", data: "25/03", mes: "Março 2026",
-    tesoureira: null, valorTotal: 150,
-    desejos: [{ texto: "Me levem para um almoço surpresa! 🎉", link: "" }],
-    locais: [], dataSugerida: "",
-    pagamentos: [
-      { amiga: "Luiza", pago: false }, { amiga: "Carol", pago: false },
-      { amiga: "Ana", pago: false }, { amiga: "Bete", pago: false },
-      { amiga: "Dani", pago: false }, { amiga: "Fabi", pago: false },
-      { amiga: "Gi", pago: false }, { amiga: "Lena", pago: false },
-      { amiga: "Tati", pago: false },
-    ],
-    mensagem: "",
-  },
-];
-
-const MSGS_INICIAIS = [
-  { id: 1, evento: "ev1", autora: "Fabi", texto: "Gente, já comprei o presente da Bete! 🎁", hora: "10:32" },
-  { id: 2, evento: "ev1", autora: "Ana", texto: "Arrasou! Quanto ficou no total?", hora: "10:35" },
-  { id: 3, evento: "ev1", autora: "Carol", texto: "R$ 180 dividido por 9 = R$ 20 cada uma. Manda o pix pra mim!", hora: "10:37" },
-  { id: 4, evento: "ev1", autora: "Gi", texto: "Já transferi! 💸", hora: "11:02" },
-  { id: 5, evento: "ev1", autora: "Lena", texto: "Votei na casa da Luiza, churras on!! 🔥", hora: "11:15" },
-];
-
 export default function App() {
   const [user, setUser] = useState(null);
   const [tab, setTab] = useState("home");
-  const [eventos, setEventos] = useState(EVENTOS);
-  const [msgs, setMsgs] = useState(MSGS_INICIAIS);
-  const [eventoAtivo, setEventoAtivo] = useState("ev1");
+  const [amigas, setAmigas] = useState([]);
+  const [eventos, setEventos] = useState([]);
+  const [eventoAtivo, setEventoAtivo] = useState(null);
+  const [msgs, setMsgs] = useState([]);
+  const [pagamentos, setPagamentos] = useState([]);
+  const [desejos, setDesejos] = useState([]);
   const [msgInput, setMsgInput] = useState("");
   const [copied, setCopied] = useState(false);
-  const [desejoEdit, setDesejoEdit] = useState({ texto: "", link: "" });
-  const [savedDesejo, setSavedDesejo] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const eu = AMIGAS.find(a => a.nome === user);
-  const evento = eventos.find(e => e.id === eventoAtivo);
-  const isAniversariante = evento && evento.aniversariante === user;
-  const isTesoureira = evento && evento.tesoureira === user;
-  const valorPorPessoa = evento ? Math.ceil(evento.valorTotal / 9) : 0;
-  const pagosMes = evento ? evento.pagamentos.filter(p => p.pago).length : 0;
+  useEffect(() => { carregarDados(); }, []);
 
-  function sendMsg() {
+  useEffect(() => {
+    if (!eventoAtivo) return;
+    const canal = supabase.channel("mensagens")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "mensagens", filter: `evento_id=eq.${eventoAtivo}` },
+        payload => setMsgs(prev => [...prev, payload.new]))
+      .subscribe();
+    return () => supabase.removeChannel(canal);
+  }, [eventoAtivo]);
+
+  async function carregarDados() {
+    setLoading(true);
+    const [{ data: am }, { data: ev }, { data: pag }, { data: des }] = await Promise.all([
+      supabase.from("amigas").select("*").eq("ativa", true).order("nome"),
+      supabase.from("eventos").select("*").eq("status", "aberto").order("criado_em"),
+      supabase.from("pagamentos").select("*"),
+      supabase.from("desejos").select("*"),
+    ]);
+    setAmigas(am || []);
+    setEventos(ev || []);
+    setPagamentos(pag || []);
+    setDesejos(des || []);
+    if (ev && ev.length > 0) setEventoAtivo(ev[0].id);
+    setLoading(false);
+  }
+
+  async function carregarMsgs(eventoId) {
+    const { data } = await supabase.from("mensagens").select("*").eq("evento_id", eventoId).order("criado_em");
+    setMsgs(data || []);
+  }
+
+  useEffect(() => { if (eventoAtivo) carregarMsgs(eventoAtivo); }, [eventoAtivo]);
+
+  async function sendMsg() {
     if (!msgInput.trim()) return;
-    setMsgs(prev => [...prev, {
-      id: Date.now(), evento: eventoAtivo, autora: user, texto: msgInput.trim(),
-      hora: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
-    }]);
+    await supabase.from("mensagens").insert({ evento_id: eventoAtivo, autora: user, texto: msgInput.trim() });
     setMsgInput("");
   }
 
-  function togglePago(amiga) {
-    setEventos(prev => prev.map(e => e.id === eventoAtivo ? {
-      ...e, pagamentos: e.pagamentos.map(p => p.amiga === amiga ? { ...p, pago: !p.pago } : p)
-    } : e));
+  async function togglePago(amiga) {
+    const pag = pagamentos.find(p => p.evento_id === eventoAtivo && p.amiga === amiga);
+    if (!pag) return;
+    const novoPago = !pag.pago;
+    await supabase.from("pagamentos").update({ pago: novoPago, atualizado_em: new Date() }).eq("id", pag.id);
+    setPagamentos(prev => prev.map(p => p.id === pag.id ? { ...p, pago: novoPago } : p));
   }
 
-  function candidatarTesoureira() {
+  async function candidatarTesoureira() {
+    await supabase.from("eventos").update({ tesoureira: user }).eq("id", eventoAtivo);
     setEventos(prev => prev.map(e => e.id === eventoAtivo ? { ...e, tesoureira: user } : e));
   }
 
+  async function salvarDesejo(dados) {
+    const existente = desejos.find(d => d.evento_id === eventoAtivo);
+    if (existente) {
+      await supabase.from("desejos").update(dados).eq("id", existente.id);
+      setDesejos(prev => prev.map(d => d.id === existente.id ? { ...d, ...dados } : d));
+    } else {
+      const { data } = await supabase.from("desejos").insert({ ...dados, evento_id: eventoAtivo }).select().single();
+      if (data) setDesejos(prev => [...prev, data]);
+    }
+  }
+
   function copyPix() {
-    const tesoureira = AMIGAS.find(a => a.nome === evento?.tesoureira);
-    if (tesoureira) {
-      navigator.clipboard?.writeText(tesoureira.pix).catch(() => {});
+    const evento = eventos.find(e => e.id === eventoAtivo);
+    const tesoureira = amigas.find(a => a.nome === evento?.tesoureira);
+    if (tesoureira?.chave_pix) {
+      navigator.clipboard?.writeText(tesoureira.chave_pix).catch(() => {});
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
   }
 
-  if (!user) return <WhoSelector onSelect={setUser} />;
+  if (!user) return <WhoSelector amigas={amigas} loading={loading} onSelect={setUser} />;
+
+  const evento = eventos.find(e => e.id === eventoAtivo);
+  const isAniversariante = evento && evento.aniversariante === user;
+  const isTesoureira = evento && evento.tesoureira === user;
+  const pagEvento = pagamentos.filter(p => p.evento_id === eventoAtivo);
+  const pagosMes = pagEvento.filter(p => p.pago).length;
+  const valorPorPessoa = evento ? Math.ceil(evento.valor_total / (amigas.length - 1)) : 0;
+  const eu = amigas.find(a => a.nome === user);
+  const mesAtual = evento ? evento.mes_ano : "";
 
   return (
     <>
@@ -223,10 +220,10 @@ export default function App() {
           <div className="header-top">
             <div>
               <div className="app-title">Niver das Luluzinhas 🎀</div>
-              <div className="app-subtitle">Março 2026</div>
+              <div className="app-subtitle">{mesAtual}</div>
             </div>
             <div className="trocar-user-btn" onClick={() => setUser(null)}>
-              <div className="user-avatar-small">{eu?.emoji}</div>
+              <div className="user-avatar-small">{eu?.emoji || "👤"}</div>
               <div className="trocar-user-info">
                 <span className="trocar-user-nome">{user}</span>
                 <span className="trocar-user-hint">trocar ↩</span>
@@ -235,11 +232,11 @@ export default function App() {
           </div>
         </header>
         <main className="content">
-          {tab === "home" && <HomeTab user={user} evento={evento} eventos={eventos} eventoAtivo={eventoAtivo} setEventoAtivo={setEventoAtivo} setTab={setTab} valorPorPessoa={valorPorPessoa} pagosMes={pagosMes} />}
-          {tab === "aniversariante" && <AniversarianteTab evento={evento} user={user} isAniversariante={isAniversariante} eventos={eventos} eventoAtivo={eventoAtivo} setEventoAtivo={setEventoAtivo} />}
-          {tab === "desejos" && <DesejoTab evento={evento} user={user} desejoEdit={desejoEdit} setDesejoEdit={setDesejoEdit} savedDesejo={savedDesejo} setSavedDesejo={setSavedDesejo} />}
-          {tab === "pagamentos" && <PagamentosTab evento={evento} user={user} isAniversariante={isAniversariante} isTesoureira={isTesoureira} valorPorPessoa={valorPorPessoa} pagosMes={pagosMes} togglePago={togglePago} copyPix={copyPix} copied={copied} candidatarTesoureira={candidatarTesoureira} />}
-          {tab === "chat" && <ChatTab msgs={msgs.filter(m => m.evento === eventoAtivo)} user={user} isAniversariante={isAniversariante} msgInput={msgInput} setMsgInput={setMsgInput} sendMsg={sendMsg} eventos={eventos} eventoAtivo={eventoAtivo} setEventoAtivo={setEventoAtivo} />}
+          {tab === "home" && <HomeTab user={user} evento={evento} eventos={eventos} eventoAtivo={eventoAtivo} setEventoAtivo={setEventoAtivo} setTab={setTab} valorPorPessoa={valorPorPessoa} pagosMes={pagosMes} pagEvento={pagEvento} />}
+          {tab === "aniversariante" && <AniversarianteTab evento={evento} user={user} eventos={eventos} eventoAtivo={eventoAtivo} setEventoAtivo={setEventoAtivo} amigas={amigas} pagosMes={pagosMes} pagEvento={pagEvento} desejos={desejos} />}
+          {tab === "desejos" && <DesejoTab evento={evento} user={user} desejos={desejos} salvarDesejo={salvarDesejo} />}
+          {tab === "pagamentos" && <PagamentosTab evento={evento} user={user} isAniversariante={isAniversariante} isTesoureira={isTesoureira} valorPorPessoa={valorPorPessoa} pagosMes={pagosMes} pagEvento={pagEvento} togglePago={togglePago} copyPix={copyPix} copied={copied} candidatarTesoureira={candidatarTesoureira} amigas={amigas} />}
+          {tab === "chat" && <ChatTab msgs={msgs} user={user} isAniversariante={isAniversariante} msgInput={msgInput} setMsgInput={setMsgInput} sendMsg={sendMsg} eventos={eventos} eventoAtivo={eventoAtivo} setEventoAtivo={setEventoAtivo} amigas={amigas} />}
         </main>
         <nav className="bottom-nav">
           {[
@@ -259,32 +256,29 @@ export default function App() {
     </>
   );
 }
-  function WhoSelector({ onSelect }) {
-  const [fotos, setFotos] = useState({});
-  function handleFoto(nome, e) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setFotos(prev => ({ ...prev, [nome]: url }));
-  }
+function WhoSelector({ amigas, loading, onSelect }) {
+  if (loading) return (
+    <>
+      <style>{STYLE}</style>
+      <div className="who-screen">
+        <div style={{ fontSize: 52, marginBottom: 12 }}>🎀</div>
+        <div className="who-title">Niver das Luluzinhas</div>
+        <div className="loading">Carregando...</div>
+      </div>
+    </>
+  );
   return (
     <>
       <style>{STYLE}</style>
       <div className="who-screen">
         <div style={{ fontSize: 52, marginBottom: 12 }}>🎀</div>
         <div className="who-title">Niver das Luluzinhas</div>
-        <div className="who-sub">Quem é você, linda?<br/><span style={{ fontSize: 12, color: "#C0A0A8" }}>Toque no seu nome para entrar · toque na foto para trocar</span></div>
+        <div className="who-sub">Quem é você, linda?</div>
         <div className="who-grid">
-          {AMIGAS.map(a => (
-            <div key={a.id} className="who-item">
-              <div style={{ position: "relative" }}>
-                <div className="avatar avatar-lg" style={fotos[a.nome] ? { backgroundImage: `url(${fotos[a.nome]})`, backgroundSize: "cover", fontSize: 0 } : {}} onClick={() => document.getElementById(`foto-${a.id}`).click()}>
-                  {!fotos[a.nome] && a.emoji}
-                </div>
-                <div style={{ position: "absolute", bottom: 0, right: 0, background: "var(--rose)", borderRadius: "50%", width: 22, height: 22, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, cursor: "pointer", border: "2px solid white" }} onClick={() => document.getElementById(`foto-${a.id}`).click()}>📷</div>
-                <input id={`foto-${a.id}`} type="file" accept="image/*" style={{ display: "none" }} onChange={e => handleFoto(a.nome, e)} />
-              </div>
-              <span className="who-name" onClick={() => onSelect(a.nome)}>{a.nome}</span>
+          {amigas.map(a => (
+            <div key={a.id} className="who-item" onClick={() => onSelect(a.nome)}>
+              <div className="avatar avatar-lg">{a.emoji || "🌸"}</div>
+              <span className="who-name">{a.apelido || a.nome}</span>
               <button className="btn btn-primary btn-sm" style={{ width: "100%", padding: "6px 0", fontSize: 12 }} onClick={() => onSelect(a.nome)}>Entrar</button>
             </div>
           ))}
@@ -294,20 +288,20 @@ export default function App() {
   );
 }
 
-function HomeTab({ user, evento, eventos, eventoAtivo, setEventoAtivo, setTab, valorPorPessoa, pagosMes }) {
-  const meuPagamento = evento?.pagamentos.find(p => p.amiga === user);
+function HomeTab({ user, evento, eventos, eventoAtivo, setEventoAtivo, setTab, valorPorPessoa, pagosMes, pagEvento }) {
+  const meuPagamento = pagEvento.find(p => p.amiga === user);
   const isAniversariante = evento?.aniversariante === user;
   return (
     <div>
       <p className="section-label">Em destaque</p>
+      {eventos.length === 0 && <div className="card" style={{ textAlign: "center", color: "var(--text-soft)" }}>Nenhum aniversário ativo no momento 🎂</div>}
       {eventos.map(ev => (
         <div key={ev.id} className="birthday-hero" style={{ cursor: "pointer" }} onClick={() => { setEventoAtivo(ev.id); setTab("aniversariante"); }}>
-          <div className="hero-tag">🎉 Aniversário de Março</div>
+          <div className="hero-tag">🎉 {ev.mes_ano}</div>
           <div className="hero-name">{ev.aniversariante}</div>
-          <div className="hero-date">📅 {ev.data} · {ev.dataSugerida || "Data a definir"}</div>
+          <div className="hero-date">📅 {ev.data_aniversario} · {ev.data_sugerida || "Data a definir"}</div>
           <div className="countdown">
-            <div className="count-box"><div className="count-num">5</div><div className="count-unit">dias</div></div>
-            <div className="count-box"><div className="count-num">12</div><div className="count-unit">horas</div></div>
+            <div className="count-box"><div className="count-num">🎂</div></div>
           </div>
         </div>
       ))}
@@ -321,30 +315,15 @@ function HomeTab({ user, evento, eventos, eventoAtivo, setEventoAtivo, setTab, v
           <button className="btn btn-primary btn-sm" onClick={() => setTab("pagamentos")}>Pagar</button>
         </div>
       )}
-      <p className="section-label" style={{ marginTop: 8 }}>Atividades recentes</p>
-      <div className="card">
-        {[
-          { emoji: "✅", texto: <><strong>Ana</strong> confirmou pagamento do presente da Bete</>, hora: "há 2h" },
-          { emoji: "🎁", texto: <><strong>Bete</strong> atualizou sua lista de desejos</>, hora: "há 5h" },
-          { emoji: "🗳️", texto: <><strong>Lena</strong> votou em local para o encontro</>, hora: "ontem" },
-          { emoji: "💬", texto: <><strong>Carol</strong> enviou mensagem no chat</>, hora: "ontem" },
-        ].map((a, i) => (
-          <div key={i} className="activity-item">
-            <span style={{ fontSize: 20 }}>{a.emoji}</span>
-            <div className="activity-text">{a.texto}</div>
-            <div className="activity-time">{a.hora}</div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
 
-function AniversarianteTab({ evento, user, eventos, eventoAtivo, setEventoAtivo }) {
-  if (!evento) return null;
-  const amiga = AMIGAS.find(a => a.nome === evento.aniversariante);
+function AniversarianteTab({ evento, user, eventos, eventoAtivo, setEventoAtivo, amigas, pagosMes, pagEvento, desejos }) {
+  if (!evento) return <div className="loading">Nenhum evento ativo 🎂</div>;
+  const amiga = amigas.find(a => a.nome === evento.aniversariante);
   const isProprioAniversario = evento.aniversariante === user;
-  const pagosMes = evento.pagamentos.filter(p => p.pago).length;
+  const desejo = desejos.find(d => d.evento_id === evento.id);
   return (
     <div>
       {eventos.length > 1 && (
@@ -356,51 +335,49 @@ function AniversarianteTab({ evento, user, eventos, eventoAtivo, setEventoAtivo 
       )}
       <div className="card">
         <div className="bday-profile">
-          <div className="avatar avatar-lg">{amiga?.emoji}</div>
+          <div className="avatar avatar-lg">{amiga?.emoji || "🌸"}</div>
           <div style={{ flex: 1 }}>
             <div className="bday-name">{evento.aniversariante}</div>
-            <div className="bday-date-tag">🎂 {evento.data}</div>
-            {evento.dataSugerida && <div className="bday-date-tag" style={{ marginTop: 4 }}>📅 {evento.dataSugerida}</div>}
-            {evento.mensagem && <div style={{ fontSize: 13, color: "#A06080", marginTop: 8, fontStyle: "italic" }}>"{evento.mensagem}"</div>}
+            <div className="bday-date-tag">🎂 {evento.data_aniversario}</div>
+            {desejo?.data_sugerida && <div className="bday-date-tag" style={{ marginTop: 4 }}>📅 {desejo.data_sugerida}</div>}
+            {desejo?.mensagem && <div style={{ fontSize: 13, color: "#A06080", marginTop: 8, fontStyle: "italic" }}>"{desejo.mensagem}"</div>}
           </div>
         </div>
         {!isProprioAniversario && (
           <div style={{ display: "flex", gap: 8, alignItems: "center", padding: "8px 12px", background: "#F0FFF4", borderRadius: 12 }}>
-            <span style={{ fontSize: 16 }}>✅</span>
-            <span style={{ fontSize: 13, color: "#3A7A50", fontWeight: 700 }}>{pagosMes} de {evento.pagamentos.length} já pagaram o presente</span>
+            <span>✅</span>
+            <span style={{ fontSize: 13, color: "#3A7A50", fontWeight: 700 }}>{pagosMes} de {pagEvento.length} já pagaram o presente</span>
           </div>
         )}
       </div>
       <p className="section-label">O que ela quer ganhar 🎁</p>
-      {evento.desejos.length > 0 ? evento.desejos.map((d, i) => (
-        <div key={i} className="wish-item">
-          <div className="wish-text">{d.texto}</div>
-          {d.link && <a className="wish-link" href={d.link} target="_blank" rel="noreferrer">🔗 Ver produto</a>}
+      {desejo?.texto ? (
+        <div className="wish-item">
+          <div className="wish-text">{desejo.texto}</div>
+          {desejo.link && <a className="wish-link" href={desejo.link} target="_blank" rel="noreferrer">🔗 Ver produto</a>}
         </div>
-      )) : <div className="card" style={{ textAlign: "center", color: "var(--text-soft)", fontSize: 14 }}>Ainda não registrou desejos 🥲</div>}
-      {evento.locais.length > 0 && (
+      ) : <div className="card" style={{ textAlign: "center", color: "var(--text-soft)", fontSize: 14 }}>Ainda não registrou desejos 🥲</div>}
+      {desejo?.local_sugerido && (
         <>
-          <p className="section-label">Sugestões de local 📍</p>
-          {evento.locais.map((loc, i) => (
-            <div key={i} className="location-item">
-              <span style={{ fontSize: 20 }}>📍</span>
-              <div>
-                <div className="location-name">{loc.nome}</div>
-                <div className="location-sub">{loc.detalhe}</div>
-              </div>
-              <div style={{ marginLeft: "auto" }}>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "var(--rose)" }}>{loc.votos} votos</div>
-              </div>
+          <p className="section-label">Sugestão de local 📍</p>
+          <div className="location-item">
+            <span style={{ fontSize: 20 }}>📍</span>
+            <div>
+              <div className="location-name">{desejo.local_sugerido}</div>
             </div>
-          ))}
+          </div>
         </>
       )}
     </div>
   );
 }
 
-function DesejoTab({ evento, user, desejoEdit, setDesejoEdit, savedDesejo, setSavedDesejo }) {
+function DesejoTab({ evento, user, desejos, salvarDesejo }) {
   const isAniversariante = evento?.aniversariante === user;
+  const desejo = desejos.find(d => d.evento_id === evento?.id);
+  const [form, setForm] = useState({ texto: desejo?.texto || "", link: desejo?.link || "", local_sugerido: desejo?.local_sugerido || "", data_sugerida: desejo?.data_sugerida || "", mensagem: desejo?.mensagem || "" });
+  const [saved, setSaved] = useState(false);
+
   if (!isAniversariante) return (
     <div className="locked-screen">
       <div className="locked-icon">🎁</div>
@@ -408,7 +385,13 @@ function DesejoTab({ evento, user, desejoEdit, setDesejoEdit, savedDesejo, setSa
       <div className="locked-text">Quando for o seu mês, você poderá registrar aqui tudo que deseja ganhar, sugerir locais e muito mais. 🥳</div>
     </div>
   );
-  function salvar() { setSavedDesejo(true); setTimeout(() => setSavedDesejo(false), 2500); }
+
+  async function salvar() {
+    await salvarDesejo(form);
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2500);
+  }
+
   return (
     <div>
       <div className="card" style={{ background: "linear-gradient(135deg,#FFF0F4,#FFE4ED)", border: "1px solid var(--rose-light)" }}>
@@ -419,31 +402,31 @@ function DesejoTab({ evento, user, desejoEdit, setDesejoEdit, savedDesejo, setSa
       <div className="card">
         <div className="form-group">
           <label className="form-label">O que você quer ganhar?</label>
-          <textarea className="form-textarea" placeholder="Ex: perfume, roupa de praia... pode sonhar!" value={desejoEdit.texto} onChange={e => setDesejoEdit(p => ({ ...p, texto: e.target.value }))} />
+          <textarea className="form-textarea" placeholder="Ex: perfume, roupa de praia... pode sonhar!" value={form.texto} onChange={e => setForm(p => ({ ...p, texto: e.target.value }))} />
         </div>
         <div className="form-group">
           <label className="form-label">Link do produto (opcional)</label>
-          <input className="form-input" placeholder="https://..." value={desejoEdit.link} onChange={e => setDesejoEdit(p => ({ ...p, link: e.target.value }))} />
+          <input className="form-input" placeholder="https://..." value={form.link} onChange={e => setForm(p => ({ ...p, link: e.target.value }))} />
         </div>
         <div className="form-group">
-          <label className="form-label">Sugestão de local para comemorar</label>
-          <input className="form-input" placeholder="Ex: Restaurante X, minha casa, praia..." />
+          <label className="form-label">Sugestão de local</label>
+          <input className="form-input" placeholder="Ex: Restaurante X, minha casa, praia..." value={form.local_sugerido} onChange={e => setForm(p => ({ ...p, local_sugerido: e.target.value }))} />
         </div>
         <div className="form-group">
           <label className="form-label">Data preferida</label>
-          <input className="form-input" type="text" placeholder="Ex: Sábado dia 15 de março" />
+          <input className="form-input" placeholder="Ex: Sábado dia 15 de março" value={form.data_sugerida} onChange={e => setForm(p => ({ ...p, data_sugerida: e.target.value }))} />
         </div>
         <div className="form-group">
           <label className="form-label">Mensagem para as amigas (opcional)</label>
-          <textarea className="form-textarea" placeholder="Um recadinho fofo para o grupo 💕" style={{ minHeight: 60 }} />
+          <textarea className="form-textarea" placeholder="Um recadinho fofo para o grupo 💕" style={{ minHeight: 60 }} value={form.mensagem} onChange={e => setForm(p => ({ ...p, mensagem: e.target.value }))} />
         </div>
-        <button className="btn btn-primary btn-full" onClick={salvar}>{savedDesejo ? "✅ Salvo!" : "💾 Salvar desejos"}</button>
+        <button className="btn btn-primary btn-full" onClick={salvar}>{saved ? "✅ Salvo!" : "💾 Salvar desejos"}</button>
       </div>
     </div>
   );
 }
 
-function PagamentosTab({ evento, user, isAniversariante, isTesoureira, valorPorPessoa, pagosMes, togglePago, copyPix, copied, candidatarTesoureira }) {
+function PagamentosTab({ evento, user, isAniversariante, isTesoureira, valorPorPessoa, pagosMes, pagEvento, togglePago, copyPix, copied, candidatarTesoureira, amigas }) {
   if (!evento) return null;
   if (isAniversariante) return (
     <div className="locked-screen">
@@ -452,17 +435,17 @@ function PagamentosTab({ evento, user, isAniversariante, isTesoureira, valorPorP
       <div className="locked-text">Você não pode ver as informações de pagamento do seu próprio aniversário. Deixa que a gente cuida disso com muito amor! 💕</div>
     </div>
   );
-  const total = evento.pagamentos.length;
-  const progresso = Math.round((pagosMes / total) * 100);
-  const tesoureira = AMIGAS.find(a => a.nome === evento.tesoureira);
-  const meuPagamento = evento.pagamentos.find(p => p.amiga === user);
+  const total = pagEvento.length;
+  const progresso = total > 0 ? Math.round((pagosMes / total) * 100) : 0;
+  const tesoureira = amigas.find(a => a.nome === evento.tesoureira);
+  const meuPagamento = pagEvento.find(p => p.amiga === user);
   return (
     <div>
       <div className="valor-box">
         <div>
           <div className="valor-label">Sua parte</div>
           <div className="valor-num">R$ {valorPorPessoa}</div>
-          <div className="valor-sub">de R$ {evento.valorTotal} total</div>
+          <div className="valor-sub">de R$ {evento.valor_total} total</div>
         </div>
         <div style={{ textAlign: "right" }}>
           <div className="valor-label">Arrecadado</div>
@@ -477,7 +460,7 @@ function PagamentosTab({ evento, user, isAniversariante, isTesoureira, valorPorP
         <div className="card" style={{ textAlign: "center" }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>🛍️</div>
           <div style={{ fontFamily: "'Playfair Display',serif", fontSize: 17, color: "var(--rose)", marginBottom: 6 }}>Quem vai comprar o presente?</div>
-          <div style={{ fontSize: 13, color: "var(--text-soft)", marginBottom: 14 }}>Se puder comprar, clique abaixo e informe sua chave Pix!</div>
+          <div style={{ fontSize: 13, color: "var(--text-soft)", marginBottom: 14 }}>Se puder comprar, clique abaixo!</div>
           <button className="btn btn-primary btn-full" onClick={candidatarTesoureira}>🙋 Quero ser a tesoureira!</button>
         </div>
       ) : (
@@ -485,7 +468,7 @@ function PagamentosTab({ evento, user, isAniversariante, isTesoureira, valorPorP
           <div className="pix-label">Tesoureira — pague para ela</div>
           <div className="pix-name">{tesoureira?.nome} {tesoureira?.emoji}</div>
           <div className="pix-key">
-            <span>{tesoureira?.pix}</span>
+            <span>{tesoureira?.chave_pix}</span>
             <button className="copy-btn" onClick={copyPix}>{copied ? "✅" : "Copiar"}</button>
           </div>
         </div>
@@ -498,9 +481,9 @@ function PagamentosTab({ evento, user, isAniversariante, isTesoureira, valorPorP
       )}
       <p className="section-label">Status de pagamentos</p>
       <div className="card">
-        {evento.pagamentos.map((p, i) => (
+        {pagEvento.map((p, i) => (
           <div key={i} className="payment-row">
-            <div className="avatar avatar-sm">{AMIGAS.find(a => a.nome === p.amiga)?.emoji}</div>
+            <div className="avatar avatar-sm">{amigas.find(a => a.nome === p.amiga)?.emoji || "🌸"}</div>
             <div className="payment-name">{p.amiga}</div>
             {isTesoureira && !p.pago ? (
               <button className="payment-confirm" onClick={() => togglePago(p.amiga)}>Confirmar</button>
@@ -514,7 +497,7 @@ function PagamentosTab({ evento, user, isAniversariante, isTesoureira, valorPorP
   );
 }
 
-function ChatTab({ msgs, user, isAniversariante, msgInput, setMsgInput, sendMsg, eventos, eventoAtivo, setEventoAtivo }) {
+function ChatTab({ msgs, user, isAniversariante, msgInput, setMsgInput, sendMsg, eventos, eventoAtivo, setEventoAtivo, amigas }) {
   if (isAniversariante) return (
     <div className="locked-screen">
       <div className="locked-icon">🤫</div>
@@ -532,18 +515,18 @@ function ChatTab({ msgs, user, isAniversariante, msgInput, setMsgInput, sendMsg,
         </div>
       )}
       <div className="chat-messages">
-        {msgs.map(m => m.autora === user ? (
-          <div key={m.id} style={{ textAlign: "right", marginBottom: 10 }}>
-            <div className="msg-bubble mine">{m.texto}<div className="msg-time">{m.hora}</div></div>
+        {msgs.map((m, i) => m.autora === user ? (
+          <div key={i} style={{ textAlign: "right", marginBottom: 10 }}>
+            <div className="msg-bubble mine">{m.texto}<div className="msg-time">{new Date(m.criado_em).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div></div>
           </div>
         ) : (
-          <div key={m.id} className="msg-with-avatar">
-            <div className="avatar avatar-sm">{AMIGAS.find(a => a.nome === m.autora)?.emoji}</div>
+          <div key={i} className="msg-with-avatar">
+            <div className="avatar avatar-sm">{amigas.find(a => a.nome === m.autora)?.emoji || "🌸"}</div>
             <div>
               <div className="msg-bubble other">
                 <div className="msg-sender">{m.autora}</div>
                 {m.texto}
-                <div className="msg-time">{m.hora}</div>
+                <div className="msg-time">{new Date(m.criado_em).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}</div>
               </div>
             </div>
           </div>
