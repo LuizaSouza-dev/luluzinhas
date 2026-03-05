@@ -223,7 +223,8 @@ export default function App() {
   const isTesoureira = evento && evento.tesoureira === user;
   const pagEvento = pagamentos.filter(p => p.evento_id === eventoAtivo);
   const pagosMes = pagEvento.filter(p => p.pago).length;
-  const valorPorPessoa = evento ? Math.ceil(evento.valor_total / (amigas.length - 1)) : 0;
+  const valorPorPessoa = evento?.valor_por_pessoa || Math.ceil(evento?.valor_total / (amigas.length - 1)) || 0;
+  const valorTotal = evento ? valorPorPessoa * (amigas.length - 1) : 0;
   const eu = amigas.find(a => a.nome === user);
   const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   const mesAtual = evento ? (() => { const [d, m] = evento.data_aniversario.split("/"); return `${meses[parseInt(m)-1]} ${new Date().getFullYear()}`; })() : "";
@@ -251,7 +252,7 @@ export default function App() {
           {tab === "home" && <HomeTab user={user} evento={evento} eventos={eventos} eventoAtivo={eventoAtivo} setEventoAtivo={setEventoAtivo} setTab={setTab} valorPorPessoa={valorPorPessoa} pagosMes={pagosMes} pagEvento={pagEvento} />}
           {tab === "aniversariante" && <AniversarianteTab evento={evento} user={user} eventos={eventos} eventoAtivo={eventoAtivo} setEventoAtivo={setEventoAtivo} amigas={amigas} pagosMes={pagosMes} pagEvento={pagEvento} desejos={desejos} />}
           {tab === "desejos" && <DesejoTab evento={evento} user={user} desejos={desejos} salvarDesejo={salvarDesejo} />}
-          {tab === "pagamentos" && <PagamentosTab evento={evento} user={user} isAniversariante={isAniversariante} isTesoureira={isTesoureira} valorPorPessoa={valorPorPessoa} pagosMes={pagosMes} pagEvento={pagEvento} togglePago={togglePago} copyPix={copyPix} copied={copied} candidatarTesoureira={candidatarTesoureira} amigas={amigas} />}
+          {tab === "pagamentos" && <PagamentosTab evento={evento} user={user} isAniversariante={isAniversariante} isTesoureira={isTesoureira} valorPorPessoa={valorPorPessoa} valorTotal={valorTotal} pagosMes={pagosMes} pagEvento={pagEvento} togglePago={togglePago} copyPix={copyPix} copied={copied} candidatarTesoureira={candidatarTesoureira} amigas={amigas} />}
           {tab === "chat" && <ChatTab msgs={msgs} user={user} isAniversariante={isAniversariante} msgInput={msgInput} setMsgInput={setMsgInput} sendMsg={sendMsg} eventos={eventos} eventoAtivo={eventoAtivo} setEventoAtivo={setEventoAtivo} amigas={amigas} />}
         </main>
         <nav className="bottom-nav">
@@ -509,7 +510,7 @@ function DesejoTab({ evento, user, desejos, salvarDesejo }) {
   );
 }
 
-function PagamentosTab({ evento, user, isAniversariante, isTesoureira, valorPorPessoa, pagosMes, pagEvento, togglePago, copyPix, copied, candidatarTesoureira, amigas }) {
+function PagamentosTab({ evento, user, isAniversariante, isTesoureira, valorPorPessoa, valorTotal, pagosMes, pagEvento, togglePago, copyPix, copied, candidatarTesoureira, amigas }) {
   if (!evento) return null;
   if (isAniversariante) return (
     <div className="locked-screen">
@@ -528,7 +529,7 @@ function PagamentosTab({ evento, user, isAniversariante, isTesoureira, valorPorP
         <div>
           <div className="valor-label">Sua parte</div>
           <div className="valor-num">R$ {valorPorPessoa}</div>
-          <div className="valor-sub">de R$ {evento.valor_total} total</div>
+          <div className="valor-sub">de R$ {valorTotal} total</div>
         </div>
         <div style={{ textAlign: "right" }}>
           <div className="valor-label">Arrecadado</div>
