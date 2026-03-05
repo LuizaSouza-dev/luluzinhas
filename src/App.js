@@ -210,7 +210,8 @@ export default function App() {
   const pagosMes = pagEvento.filter(p => p.pago).length;
   const valorPorPessoa = evento ? Math.ceil(evento.valor_total / (amigas.length - 1)) : 0;
   const eu = amigas.find(a => a.nome === user);
-  const mesAtual = evento ? evento.mes_ano : "";
+  const meses = ["Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+const mesAtual = evento ? (() => { const [d, m] = evento.data_aniversario.split("/"); return `${meses[parseInt(m)-1]} ${new Date().getFullYear()}`; })() : "";
 
   return (
     <>
