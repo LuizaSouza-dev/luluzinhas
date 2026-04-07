@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -582,6 +582,12 @@ function PagamentosTab({ evento, user, isAniversariante, isTesoureira, valorPorP
 }
 
 function ChatTab({ msgs, user, isAniversariante, msgInput, setMsgInput, sendMsg, eventos, eventoAtivo, setEventoAtivo, amigas }) {
+  const bottomRef = useRef(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [msgs]);
+
   if (isAniversariante) return (
     <div className="locked-screen">
       <div className="locked-icon">🤫</div>
@@ -615,6 +621,7 @@ function ChatTab({ msgs, user, isAniversariante, msgInput, setMsgInput, sendMsg,
             </div>
           </div>
         ))}
+        <div ref={bottomRef} />
       </div>
       <div className="chat-input-area">
         <input className="chat-input" placeholder="Mensagem..." value={msgInput} onChange={e => setMsgInput(e.target.value)} onKeyDown={e => e.key === "Enter" && sendMsg()} />
