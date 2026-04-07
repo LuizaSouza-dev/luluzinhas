@@ -180,6 +180,7 @@ export default function App() {
     if (!msgInput.trim()) return;
     await supabase.from("mensagens").insert({ evento_id: eventoAtivo, autora: user, texto: msgInput.trim() });
     setMsgInput("");
+    carregarMsgs(eventoAtivo);
   }
 
   async function togglePago(amiga) {
