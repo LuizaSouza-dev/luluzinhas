@@ -159,10 +159,10 @@ export default function App() {
     setAmigas(am || []);
     setPagamentos(pag || []);
     setDesejos(des || []);
-    const mesAtual = new Date().getMonth() + 1;
+    const hoje = new Date(); const mesAtual = hoje.getMonth() + 1; const mesProximo = mesAtual === 12 ? 1 : mesAtual + 1;
     const evFiltrados = (ev || []).filter(e => {
       const mes = parseInt(e.data_aniversario.split("/")[1]);
-      return mes === mesAtual;
+      return mes === mesAtual || mes === mesProximo;
     });
     setEventos(evFiltrados);
     if (evFiltrados.length > 0) setEventoAtivo(evFiltrados[0].id);
