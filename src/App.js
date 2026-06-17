@@ -166,7 +166,7 @@ export default function App() {
     });
     setEventos(evFiltrados);
     if (evFiltrados.length > 0) setEventoAtivo(evFiltrados[0].id);
-    // Cria pagamentos automaticamente para eventos que ainda não têm for (const ev of evFiltrados) {   const { data: pagsExistentes } = await supabase     .from("pagamentos")     .select("id")     .eq("evento_id", ev.id);      if (!pagsExistentes || pagsExistentes.length === 0) {     const amigas_sem_aniversariante = (am || []).filter(a => a.nome !== ev.aniversariante);     await supabase.from("pagamentos").insert(       amigas_sem_aniversariante.map(a => ({         evento_id: ev.id,         amiga: a.nome,         pago: false       }))     );   } }  setLoading(false);
+    // Cria pagamentos automaticamente para eventos que ainda não têm for (const ev of evFiltrados) {   const { data: pagsExistentes } = await supabase     .from("pagamentos")     .select("id")     .eq("evento_id", ev.id);      if (!pagsExistentes || pagsExistentes.length === 0) {     const amigas_sem_aniversariante = (am || []).filter(a => a.nome !== ev.aniversariante);     await supabase.from("pagamentos").insert(       amigas_sem_aniversariante.map(a => ({         evento_id: ev.id,         amiga: a.nome,         pago: false       }))     );   } }  const amigasLista = am || []; for (const ev of evFiltrados) {   const { data: pagsExistentes } = await supabase.from("pagamentos").select("id").eq("evento_id", ev.id);   if (!pagsExistentes || pagsExistentes.length === 0) {     await supabase.from("pagamentos").insert(amigasLista.filter(a => a.nome !== ev.aniversariante).map(a => ({ evento_id: ev.id, amiga: a.nome, pago: false })));   } } setLoading(false);
   }
 
   async function carregarMsgs(eventoId) {
